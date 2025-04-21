@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PagerDuty Custom Event Generator</title>
+    <title>PagerDuty Event Generator</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/bvScwHL.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -28,12 +28,20 @@
         .key-item {
             background-color: #005a2f;
             color: white !important;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .status-log {
             background-color: #005a2f;
             color: white !important;
             height: 200px;
             overflow-y: auto;
+            padding: 10px;
+            border-radius: 5px;
         }
         .form-control {
             background-color: #005a2f;
@@ -62,6 +70,8 @@
         .key-selection-box {
             background-color: #005a2f;
             color: white !important;
+            padding: 10px;
+            border-radius: 5px;
         }
         .form-check-label {
             color: white !important;
@@ -83,12 +93,6 @@
         }
         .collapse-toggle.collapsed:after {
             content: ' ▶';
-        }
-        .card-header {
-            background-color: #006666 !important;
-        }
-        .card-header:hover {
-            background-color: #005555 !important;
         }
         .btn-primary {
             background-color: #006666;
@@ -131,31 +135,9 @@
         }
         .custom-details {
             background-color: #005a2f;
-            border-color: #006666;
-            color: white !important;
-        }
-        .custom-details-pair {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .custom-details-pair .form-control {
-            flex: 1;
-        }
-        .remove-pair {
-            color: white !important;
-            background-color: #dc3545;
-            border: none;
-            border-radius: 4px;
-            padding: 0 10px;
-        }
-        #previewPayload {
-            background-color: #004a2f;
             padding: 15px;
             border-radius: 5px;
             margin-top: 15px;
-            white-space: pre-wrap;
-            font-family: monospace;
         }
         .countdown {
             color: white !important;
@@ -173,7 +155,7 @@
     <div class="container mt-4">
         <!-- Initial Setup Section -->
         <div id="setupSection" class="mb-4">
-            <h2>PagerDuty Custom Event Generator Setup</h2>
+            <h2>PagerDuty Event Generator Setup</h2>
             <div class="alert alert-info">
                 <h5>How to get your PagerDuty Routing/Integration Keys:</h5>
                 <ol>
@@ -199,7 +181,7 @@
 
         <!-- Main Control Section -->
         <div id="controlSection" class="hidden">
-            <h2>PagerDuty Custom Event Generator</h2>
+            <h2>PagerDuty Event Generator</h2>
 
             <!-- Routing Keys Management -->
             <div class="card mb-4">
@@ -224,77 +206,106 @@
                     <h5 class="mb-0">Event Generator Controls</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Event Type Selection -->
                     <div class="mb-3">
-                        <label class="form-label">Routing Key Selection</label>
-                        <select id="keySelectionMode" class="form-select">
-                            <option value="random">Random (Default)</option>
-                            <option value="specific">Specific Keys</option>
+                        <label class="form-label">Event Type</label>
+                        <select id="eventType" class="form-select" onchange="toggleEventType()">
+                            <option value="standard">Standard Random Events</option>
+                            <option value="custom">Custom Events</option>
                         </select>
-                        <div id="specificKeySelection" class="mt-2 hidden">
-                            <div class="key-selection-box">
-                                <div id="specificKeys">
-                                    <!-- Checkboxes will be populated here -->
+                    </div>
+
+                    <!-- Standard Controls -->
+                    <div id="standardControls">
+                        <div class="mb-3">
+                            <label class="form-label">Routing Key Selection</label>
+                            <select id="keySelectionMode" class="form-select">
+                                <option value="random">Random (Default)</option>
+                                <option value="specific">Specific Keys</option>
+                            </select>
+                            <div id="specificKeySelection" class="mt-2 hidden">
+                                <div class="key-selection-box">
+                                    <div id="specificKeys">
+                                        <!-- Checkboxes will be populated here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Custom Payload Section -->
-                    <div class="mb-3">
-                        <label class="form-label">Event Summary</label>
-                        <input type="text" id="eventSummary" class="form-control" 
-                               placeholder="Enter event summary" value="Test alert">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Event Severity</label>
-                        <select id="severityMode" class="form-select">
-                            <option value="critical">Critical</option>
-                            <option value="error">Error</option>
-                            <option value="warning">Warning</option>
-                            <option value="info">Info</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Source</label>
-                        <input type="text" id="eventSource" class="form-control" 
-                               placeholder="Enter event source" value="PD Event Generator">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Group</label>
-                        <input type="text" id="eventGroup" class="form-control" 
-                               placeholder="Enter event group">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Component</label>
-                        <input type="text" id="eventComponent" class="form-control" 
-                               placeholder="Enter component name">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Custom Details</label>
-                        <div id="customDetails">
-                            <!-- Custom detail pairs will be added here -->
+                        <div class="mb-3">
+                            <label class="form-label">Run Mode</label>
+                            <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
+                                <option value="single">Single Run</option>
+                                <option value="multiple">Multiple Runs</option>
+                            </select>
                         </div>
-                        <button onclick="addCustomDetailPair()" class="btn btn-outline-primary mt-2">
-                            Add Custom Detail
-                        </button>
+
+                        <div class="mb-3">
+                            <label class="form-label">Event Severity</label>
+                            <select id="severityMode" class="form-select">
+                                <option value="random">Random (Default)</option>
+                                <option value="critical">Critical</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Preview Payload</label>
-                        <div id="previewPayload"></div>
-                    </div>
+                    <!-- Custom Event Controls -->
+                    <div id="customControls" class="hidden">
+                        <div class="mb-3">
+                            <label class="form-label">Summary</label>
+                            <input type="text" id="eventSummary" class="form-control" 
+                                   placeholder="Enter event summary">
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Run Mode</label>
-                        <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
-                            <option value="single">Single Run</option>
-                            <option value="multiple">Multiple Runs</option>
-                        </select>
+                        <div class="mb-3">
+                            <label class="form-label">Severity</label>
+                            <select id="customSeverity" class="form-select">
+                                <option value="critical">Critical</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Source</label>
+                            <input type="text" id="eventSource" class="form-control" 
+                                   placeholder="Enter event source">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Group</label>
+                            <input type="text" id="eventGroup" class="form-control" 
+                                   placeholder="Enter event group">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Component</label>
+                            <input type="text" id="eventComponent" class="form-control" 
+                                   placeholder="Enter component name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Class</label>
+                            <input type="text" id="eventClass" class="form-control" 
+                                   placeholder="Enter event class">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Custom Details</label>
+                            <div id="customDetails"></div>
+                            <button onclick="addCustomDetailPair()" class="btn btn-outline-primary mt-2">
+                                Add Custom Detail
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Payload Preview</label>
+                            <div id="previewPayload" class="custom-details"></div>
+                        </div>
                     </div>
 
                     <div id="iterationControls" class="hidden">
@@ -350,26 +361,35 @@
             }
             updateKeysList();
 
+            // Add event listener for key selection mode
+            document.getElementById('keySelectionMode').addEventListener('change', function() {
+                const specificKeySelection = document.getElementById('specificKeySelection');
+                specificKeySelection.classList.toggle('hidden', this.value === 'random');
+            });
+
             // Add event listeners for payload preview
-            document.getElementById('keySelectionMode').addEventListener('change', updatePayloadPreview);
             document.getElementById('eventSummary').addEventListener('input', updatePayloadPreview);
-            document.getElementById('severityMode').addEventListener('change', updatePayloadPreview);
+            document.getElementById('customSeverity').addEventListener('change', updatePayloadPreview);
             document.getElementById('eventSource').addEventListener('input', updatePayloadPreview);
             document.getElementById('eventGroup').addEventListener('input', updatePayloadPreview);
             document.getElementById('eventComponent').addEventListener('input', updatePayloadPreview);
-
-            // Initial payload preview
-            updatePayloadPreview();
+            document.getElementById('eventClass').addEventListener('input', updatePayloadPreview);
         };
 
-        // Initialize all collapse toggles
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.collapse-toggle').forEach(toggle => {
-                toggle.addEventListener('click', function() {
-                    this.classList.toggle('collapsed');
-                });
-            });
-        });
+        function toggleEventType() {
+            const eventType = document.getElementById('eventType').value;
+            const standardControls = document.getElementById('standardControls');
+            const customControls = document.getElementById('customControls');
+            
+            if (eventType === 'standard') {
+                standardControls.classList.remove('hidden');
+                customControls.classList.add('hidden');
+            } else {
+                standardControls.classList.add('hidden');
+                customControls.classList.remove('hidden');
+                updatePayloadPreview();
+            }
+        }
 
         function addCustomDetailPair() {
             const pair = {
@@ -383,16 +403,18 @@
         function updateCustomDetailPairs() {
             const container = document.getElementById('customDetails');
             container.innerHTML = customDetailPairs.map((pair, index) => `
-                <div class="custom-details-pair">
-                    <input type="text" class="form-control" 
-                           placeholder="Key" 
-                           value="${pair.key}"
-                           onchange="updateCustomDetailKey(${index}, this.value)">
-                    <input type="text" class="form-control" 
-                           placeholder="Value" 
-                           value="${pair.value}"
-                           onchange="updateCustomDetailValue(${index}, this.value)">
-                    <button class="remove-pair" onclick="removeCustomDetailPair(${index})">×</button>
+                <div class="custom-details-pair mb-2">
+                    <div class="input-group">
+                        <input type="text" class="form-control" 
+                               placeholder="Key" 
+                               value="${pair.key}"
+                               onchange="updateCustomDetailKey(${index}, this.value)">
+                        <input type="text" class="form-control" 
+                               placeholder="Value" 
+                               value="${pair.value}"
+                               onchange="updateCustomDetailValue(${index}, this.value)">
+                        <button class="btn btn-danger" onclick="removeCustomDetailPair(${index})">Remove</button>
+                    </div>
                 </div>
             `).join('');
             updatePayloadPreview();
@@ -424,13 +446,16 @@
             const payload = {
                 routing_key: "YOUR_ROUTING_KEY",
                 event_action: "trigger",
+                client: "KrakenDuty",
+                client_url: window.location.href,
                 payload: {
                     summary: document.getElementById('eventSummary').value || "Test alert",
+                    severity: document.getElementById('customSeverity').value,
                     source: document.getElementById('eventSource').value || "PD Event Generator",
-                    severity: document.getElementById('severityMode').value,
-                    group: document.getElementById('eventGroup').value || undefined,
+                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined,
                     component: document.getElementById('eventComponent').value || undefined,
-                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined
+                    group: document.getElementById('eventGroup').value || undefined,
+                    class: document.getElementById('eventClass').value || undefined
                 }
             };
 
@@ -445,7 +470,7 @@
                 JSON.stringify(payload, null, 2);
         }
 
-        // Original functions with modifications for custom payload
+        // Original functions
         function addKey() {
             const keyInput = document.getElementById('newKeyInput');
             const nameInput = document.getElementById('newKeyName');
@@ -553,44 +578,21 @@
             iterationControls.classList.toggle('hidden', document.getElementById('runMode').value === 'single');
         }
 
-        function buildEventPayload(selectedKey) {
-            const customDetails = {};
-            customDetailPairs.forEach(pair => {
-                if (pair.key.trim()) {
-                    customDetails[pair.key] = pair.value;
-                }
-            });
-
-            const payload = {
-                routing_key: selectedKey,
-                event_action: "trigger",
-                payload: {
-                    summary: document.getElementById('eventSummary').value || "Test alert",
-                    source: document.getElementById('eventSource').value || "PD Event Generator",
-                    severity: document.getElementById('severityMode').value
-                }
-            };
-
-            // Add optional fields if they have values
-            const group = document.getElementById('eventGroup').value;
-            if (group) payload.payload.group = group;
-
-            const component = document.getElementById('eventComponent').value;
-            if (component) payload.payload.component = component;
-
-            if (Object.keys(customDetails).length > 0) {
-                payload.payload.custom_details = customDetails;
-            }
-
-            return payload;
-        }
-
         function startGenerator() {
             if (routingKeys.length === 0) {
                 alert('Please add at least one routing key');
                 return;
             }
 
+            const eventType = document.getElementById('eventType').value;
+            if (eventType === 'standard') {
+                startStandardGenerator();
+            } else {
+                startCustomGenerator();
+            }
+        }
+
+        function startStandardGenerator() {
             const keySelectionMode = document.getElementById('keySelectionMode').value;
             if (keySelectionMode === 'specific') {
                 const checkedKeys = Array.from(document.querySelectorAll('input[name="specific-keys"]:checked'))
@@ -619,19 +621,21 @@
             }
             
             currentIteration = 0;
-            runIteration();
+            runStandardIteration();
         }
 
-        function stopGenerator() {
-            isRunning = false;
-            clearInterval(countdownInterval);
-            document.querySelector('button[onclick="startGenerator()"]').disabled = false;
-            document.querySelector('button[onclick="stopGenerator()"]').disabled = true;
-            document.getElementById('countdown').innerHTML = '';
-            logStatus('Generator stopped by user');
+        function startCustomGenerator() {
+            isRunning = true;
+            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
+
+            const runMode = document.getElementById('runMode').value;
+            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+            currentIteration = 0;
+            runCustomIteration();
         }
 
-        function runIteration() {
+        function runStandardIteration() {
             if (!isRunning) return;
 
             currentIteration++;
@@ -653,28 +657,116 @@
             const keyObj = routingKeys.find(k => k.key === selectedKey);
             const keyName = keyObj ? keyObj.name : selectedKey;
 
-            const eventPayload = buildEventPayload(selectedKey);
+            let selectedSeverity;
+            const severityMode = document.getElementById('severityMode').value;
+            if (severityMode === 'random') {
+                const severities = ['critical', 'error', 'warning', 'info'];
+                selectedSeverity = severities[Math.floor(Math.random() * severities.length)];
+            } else {
+                selectedSeverity = severityMode;
+            }
+
+            const scenarios = ['network', 'database', 'application', 'disk', 'login'];
+            const selectedScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
 
             logStatus(`Running iteration ${currentIteration} of ${totalIterations}`);
             logStatus(`Using routing key: ${keyName} (${selectedKey})`);
-            logStatus(`Sending payload with severity: ${eventPayload.payload.severity}`);
+            logStatus(`Scenario: ${selectedScenario}, Severity: ${selectedSeverity}`);
 
             fetch('https://events.pagerduty.com/v2/enqueue', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(eventPayload)
+                body: JSON.stringify({
+                    routing_key: selectedKey,
+                    event_action: "trigger",
+                    payload: {
+                        summary: `Test alert - ${selectedScenario}`,
+                        source: "PD Event Generator",
+                        severity: selectedSeverity
+                    }
+                })
             }).catch(error => logStatus(`Error: ${error.message}`));
 
             if (currentIteration < totalIterations && isRunning) {
                 const delay = parseInt(document.getElementById('delay').value);
                 startCountdown(delay);
-                setTimeout(runIteration, delay * 1000);
+                setTimeout(runStandardIteration, delay * 1000);
             } else if (isRunning) {
                 stopGenerator();
                 logStatus('Generator completed all iterations');
             }
+        }
+
+        function runCustomIteration() {
+            if (!isRunning) return;
+
+            currentIteration++;
+            
+            const selectedKey = routingKeys[Math.floor(Math.random() * routingKeys.length)].key;
+            const keyObj = routingKeys.find(k => k.key === selectedKey);
+            const keyName = keyObj ? keyObj.name : selectedKey;
+
+            const customDetails = {};
+            customDetailPairs.forEach(pair => {
+                if (pair.key.trim()) {
+                    customDetails[pair.key] = pair.value;
+                }
+            });
+
+            const payload = {
+                routing_key: selectedKey,
+                event_action: "trigger",
+                client: "KrakenDuty",
+                client_url: window.location.href,
+                payload: {
+                    summary: document.getElementById('eventSummary').value || "Test alert",
+                    severity: document.getElementById('customSeverity').value,
+                    source: document.getElementById('eventSource').value || "PD Event Generator",
+                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined,
+                    component: document.getElementById('eventComponent').value || undefined,
+                    group: document.getElementById('eventGroup').value || undefined,
+                    class: document.getElementById('eventClass').value || undefined
+                }
+            };
+
+            // Remove undefined fields
+            Object.keys(payload.payload).forEach(key => {
+                if (payload.payload[key] === undefined) {
+                    delete payload.payload[key];
+                }
+            });
+
+            logStatus(`Running iteration ${currentIteration} of ${totalIterations}`);
+            logStatus(`Using routing key: ${keyName} (${selectedKey})`);
+            logStatus(`Sending custom payload with severity: ${payload.payload.severity}`);
+
+            fetch('https://events.pagerduty.com/v2/enqueue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            }).catch(error => logStatus(`Error: ${error.message}`));
+
+            if (currentIteration < totalIterations && isRunning) {
+                const delay = parseInt(document.getElementById('delay').value);
+                startCountdown(delay);
+                setTimeout(runCustomIteration, delay * 1000);
+            } else if (isRunning) {
+                stopGenerator();
+                logStatus('Generator completed all iterations');
+            }
+        }
+
+        function stopGenerator() {
+            isRunning = false;
+            clearInterval(countdownInterval);
+            document.querySelector('button[onclick="startGenerator()"]').disabled = false;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = true;
+            document.getElementById('countdown').innerHTML = '';
+            logStatus('Generator stopped by user');
         }
 
         function startCountdown(seconds) {
