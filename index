@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PagerDuty Custom Event Generator</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/bvScwHL.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #048a24;
+            color: white !important;
+        }
+        .card {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .card-header {
+            background-color: #006666 !important;
+            color: white !important;
+        }
+        .card-header h5 {
+            color: white !important;
+        }
+        h2 {
+            color: white !important;
+        }
+        .key-item {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .status-log {
+            background-color: #005a2f;
+            color: white !important;
+            height: 200px;
+            overflow-y: auto;
+        }
+        .form-control {
+            background-color: #005a2f;
+            color: white !important;
+            border-color: #006666;
+        }
+        .form-control:focus {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        .form-select {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .form-select:focus {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .form-select option {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .key-selection-box {
+            background-color: #005a2f;
+            color: white !important;
+        }
+        .form-check-label {
+            color: white !important;
+        }
+        .alert-info {
+            background-color: #005a2f;
+            color: white !important;
+            border-color: #006666;
+        }
+        .collapse-toggle {
+            cursor: pointer;
+            user-select: none;
+            color: white !important;
+        }
+        .collapse-toggle:after {
+            content: ' ▼';
+            font-size: 0.8em;
+            color: white !important;
+        }
+        .collapse-toggle.collapsed:after {
+            content: ' ▶';
+        }
+        .card-header {
+            background-color: #006666 !important;
+        }
+        .card-header:hover {
+            background-color: #005555 !important;
+        }
+        .btn-primary {
+            background-color: #006666;
+            border-color: #006666;
+            color: white !important;
+        }
+        .btn-primary:hover {
+            background-color: #005555;
+            border-color: #005555;
+        }
+        .btn-success {
+            background-color: #006666;
+            border-color: #006666;
+            color: white !important;
+        }
+        .btn-success:hover {
+            background-color: #005555;
+            border-color: #005555;
+        }
+        .btn-outline-primary {
+            color: white !important;
+            border-color: #006666;
+        }
+        .btn-outline-primary:hover {
+            background-color: #006666;
+            border-color: #006666;
+        }
+        .btn-danger {
+            color: white !important;
+        }
+        .btn-info {
+            color: white !important;
+            background-color: #006666;
+            border-color: #006666;
+        }
+        .btn-info:hover {
+            background-color: #005555;
+            border-color: #005555;
+            color: white !important;
+        }
+        .custom-details {
+            background-color: #005a2f;
+            border-color: #006666;
+            color: white !important;
+        }
+        .custom-details-pair {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .custom-details-pair .form-control {
+            flex: 1;
+        }
+        .remove-pair {
+            color: white !important;
+            background-color: #dc3545;
+            border: none;
+            border-radius: 4px;
+            padding: 0 10px;
+        }
+        #previewPayload {
+            background-color: #004a2f;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .countdown {
+            color: white !important;
+        }
+        /* Override any bootstrap text colors */
+        * {
+            color: white !important;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Initial Setup Section -->
+        <div id="setupSection" class="mb-4">
+            <h2>PagerDuty Custom Event Generator Setup</h2>
+            <div class="alert alert-info">
+                <h5>How to get your PagerDuty Routing/Integration Keys:</h5>
+                <ol>
+                    <li>Go to your sandbox services settings</li>
+                    <li>Click 'Integrations'</li>
+                    <li>Click 'Add Integration'</li>
+                    <li>Add any integration (no need to actually integrate it)</li>
+                    <li>Click on the cog icon (⚙️) on the right side of the integration bar</li>
+                    <li>Copy the Integration Key</li>
+                    <li>Paste it below</li>
+                </ol>
+            </div>
+            <div class="mb-3">
+                <div class="input-group">
+                    <input type="text" id="newKeyInput" class="form-control" placeholder="Enter routing key">
+                    <input type="text" id="newKeyName" class="form-control" placeholder="Enter key name (optional)">
+                    <button onclick="addKey()" class="btn btn-primary">Add Key</button>
+                </div>
+            </div>
+            <div id="keysList" class="mb-3"></div>
+            <button onclick="saveAndContinue()" class="btn btn-success">Save and Continue</button>
+        </div>
+
+        <!-- Main Control Section -->
+        <div id="controlSection" class="hidden">
+            <h2>PagerDuty Custom Event Generator</h2>
+
+            <!-- Routing Keys Management -->
+            <div class="card mb-4">
+                <div class="card-header collapse-toggle" data-bs-toggle="collapse" data-bs-target="#keysManagement">
+                    <h5 class="mb-0">Manage Routing Keys</h5>
+                </div>
+                <div id="keysManagement" class="collapse show">
+                    <div class="card-body">
+                        <div id="mainKeysList"></div>
+                        <div class="input-group mt-3">
+                            <input type="text" id="mainNewKeyInput" class="form-control" placeholder="Enter new routing key">
+                            <input type="text" id="mainNewKeyName" class="form-control" placeholder="Enter key name (optional)">
+                            <button class="btn btn-outline-primary" onclick="addKeyMain()">Add New Key</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Generator Controls -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Event Generator Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Routing Key Selection</label>
+                        <select id="keySelectionMode" class="form-select">
+                            <option value="random">Random (Default)</option>
+                            <option value="specific">Specific Keys</option>
+                        </select>
+                        <div id="specificKeySelection" class="mt-2 hidden">
+                            <div class="key-selection-box">
+                                <div id="specificKeys">
+                                    <!-- Checkboxes will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Payload Section -->
+                    <div class="mb-3">
+                        <label class="form-label">Event Summary</label>
+                        <input type="text" id="eventSummary" class="form-control" 
+                               placeholder="Enter event summary" value="Test alert">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Event Severity</label>
+                        <select id="severityMode" class="form-select">
+                            <option value="critical">Critical</option>
+                            <option value="error">Error</option>
+                            <option value="warning">Warning</option>
+                            <option value="info">Info</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Source</label>
+                        <input type="text" id="eventSource" class="form-control" 
+                               placeholder="Enter event source" value="PD Event Generator">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Group</label>
+                        <input type="text" id="eventGroup" class="form-control" 
+                               placeholder="Enter event group">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Component</label>
+                        <input type="text" id="eventComponent" class="form-control" 
+                               placeholder="Enter component name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Custom Details</label>
+                        <div id="customDetails">
+                            <!-- Custom detail pairs will be added here -->
+                        </div>
+                        <button onclick="addCustomDetailPair()" class="btn btn-outline-primary mt-2">
+                            Add Custom Detail
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Preview Payload</label>
+                        <div id="previewPayload"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Run Mode</label>
+                        <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
+                            <option value="single">Single Run</option>
+                            <option value="multiple">Multiple Runs</option>
+                        </select>
+                    </div>
+
+                    <div id="iterationControls" class="hidden">
+                        <div class="mb-3">
+                            <label class="form-label">Number of Iterations</label>
+                            <input type="number" id="iterations" class="form-control" min="1" max="100" value="1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Delay Between Iterations (seconds)</label>
+                            <input type="number" id="delay" class="form-control" min="0" max="3600" value="300">
+                        </div>
+                    </div>
+                    <button onclick="startGenerator()" class="btn btn-primary">Start Generator</button>
+                    <button onclick="stopGenerator()" class="btn btn-danger" disabled>Stop Generator</button>
+                </div>
+            </div>
+
+            <!-- Status Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Status Log</h5>
+                </div>
+                <div class="card-body">
+                    <div id="countdown" class="countdown mb-2"></div>
+                    <div id="statusLog" class="status-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize variables
+        let routingKeys = [];
+        let isRunning = false;
+        let currentIteration = 0;
+        let totalIterations = 0;
+        let countdownInterval;
+        let selectedKeysQueue = [];
+        let totalSelectedKeys = 0;
+        let customDetailPairs = [];
+
+        // Load saved keys on startup
+        window.onload = function() {
+            const savedKeys = localStorage.getItem('pdRoutingKeys');
+            if (savedKeys) {
+                routingKeys = JSON.parse(savedKeys);
+                if (routingKeys.length > 0) {
+                    document.getElementById('setupSection').classList.add('hidden');
+                    document.getElementById('controlSection').classList.remove('hidden');
+                    updateKeysListMain();
+                    updateSpecificKeyDropdown();
+                }
+            }
+            updateKeysList();
+
+            // Add event listeners for payload preview
+            document.getElementById('keySelectionMode').addEventListener('change', updatePayloadPreview);
+            document.getElementById('eventSummary').addEventListener('input', updatePayloadPreview);
+            document.getElementById('severityMode').addEventListener('change', updatePayloadPreview);
+            document.getElementById('eventSource').addEventListener('input', updatePayloadPreview);
+            document.getElementById('eventGroup').addEventListener('input', updatePayloadPreview);
+            document.getElementById('eventComponent').addEventListener('input', updatePayloadPreview);
+
+            // Initial payload preview
+            updatePayloadPreview();
+        };
+
+        // Initialize all collapse toggles
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.collapse-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                });
+            });
+        });
+
+        function addCustomDetailPair() {
+            const pair = {
+                key: '',
+                value: ''
+            };
+            customDetailPairs.push(pair);
+            updateCustomDetailPairs();
+        }
+
+        function updateCustomDetailPairs() {
+            const container = document.getElementById('customDetails');
+            container.innerHTML = customDetailPairs.map((pair, index) => `
+                <div class="custom-details-pair">
+                    <input type="text" class="form-control" 
+                           placeholder="Key" 
+                           value="${pair.key}"
+                           onchange="updateCustomDetailKey(${index}, this.value)">
+                    <input type="text" class="form-control" 
+                           placeholder="Value" 
+                           value="${pair.value}"
+                           onchange="updateCustomDetailValue(${index}, this.value)">
+                    <button class="remove-pair" onclick="removeCustomDetailPair(${index})">×</button>
+                </div>
+            `).join('');
+            updatePayloadPreview();
+        }
+
+        function updateCustomDetailKey(index, value) {
+            customDetailPairs[index].key = value;
+            updatePayloadPreview();
+        }
+
+        function updateCustomDetailValue(index, value) {
+            customDetailPairs[index].value = value;
+            updatePayloadPreview();
+        }
+
+        function removeCustomDetailPair(index) {
+            customDetailPairs.splice(index, 1);
+            updateCustomDetailPairs();
+        }
+
+        function updatePayloadPreview() {
+            const customDetails = {};
+            customDetailPairs.forEach(pair => {
+                if (pair.key.trim()) {
+                    customDetails[pair.key] = pair.value;
+                }
+            });
+
+            const payload = {
+                routing_key: "YOUR_ROUTING_KEY",
+                event_action: "trigger",
+                payload: {
+                    summary: document.getElementById('eventSummary').value || "Test alert",
+                    source: document.getElementById('eventSource').value || "PD Event Generator",
+                    severity: document.getElementById('severityMode').value,
+                    group: document.getElementById('eventGroup').value || undefined,
+                    component: document.getElementById('eventComponent').value || undefined,
+                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined
+                }
+            };
+
+            // Remove undefined fields
+            Object.keys(payload.payload).forEach(key => {
+                if (payload.payload[key] === undefined) {
+                    delete payload.payload[key];
+                }
+            });
+
+            document.getElementById('previewPayload').textContent = 
+                JSON.stringify(payload, null, 2);
+        }
+
+        // Original functions with modifications for custom payload
+        function addKey() {
+            const keyInput = document.getElementById('newKeyInput');
+            const nameInput = document.getElementById('newKeyName');
+            const key = keyInput.value.trim();
+            const name = nameInput.value.trim() || key;
+            
+            if (key && !routingKeys.some(k => k.key === key)) {
+                routingKeys.push({ key: key, name: name });
+                keyInput.value = '';
+                nameInput.value = '';
+                updateKeysList();
+            }
+        }
+
+        function addKeyMain() {
+            const keyInput = document.getElementById('mainNewKeyInput');
+            const nameInput = document.getElementById('mainNewKeyName');
+            const key = keyInput.value.trim();
+            const name = nameInput.value.trim() || key;
+            
+            if (key && !routingKeys.some(k => k.key === key)) {
+                routingKeys.push({ key: key, name: name });
+                keyInput.value = '';
+                nameInput.value = '';
+                updateKeysListMain();
+                updateSpecificKeyDropdown();
+                localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+            }
+        }
+
+        function removeKey(index) {
+            routingKeys.splice(index, 1);
+            updateKeysList();
+            updateKeysListMain();
+            updateSpecificKeyDropdown();
+            localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+        }
+
+        function editKeyName(index) {
+            const newName = prompt('Enter new name for the key:', routingKeys[index].name);
+            if (newName !== null && newName.trim() !== '') {
+                routingKeys[index].name = newName.trim();
+                updateKeysList();
+                updateKeysListMain();
+                updateSpecificKeyDropdown();
+                localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+            }
+        }
+
+        function updateKeysList() {
+            const keysList = document.getElementById('keysList');
+            keysList.innerHTML = routingKeys.map((keyObj, index) => `
+                <div class="key-item">
+                    <span>${keyObj.name} (${keyObj.key})</span>
+                    <div>
+                        <button onclick="editKeyName(${index})" class="btn btn-sm btn-info me-2">Rename</button>
+                        <button onclick="removeKey(${index})" class="btn btn-sm btn-danger">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateKeysListMain() {
+            const keysList = document.getElementById('mainKeysList');
+            keysList.innerHTML = routingKeys.map((keyObj, index) => `
+                <div class="key-item">
+                    <span>${keyObj.name} (${keyObj.key})</span>
+                    <div>
+                        <button onclick="editKeyName(${index})" class="btn btn-sm btn-info me-2">Rename</button>
+                        <button onclick="removeKey(${index})" class="btn btn-sm btn-danger">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSpecificKeyDropdown() {
+            const specificKeysDiv = document.getElementById('specificKeys');
+            specificKeysDiv.innerHTML = routingKeys.map(keyObj => `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" 
+                           value="${keyObj.key}" 
+                           id="key-${keyObj.key}" 
+                           name="specific-keys">
+                    <label class="form-check-label" for="key-${keyObj.key}">
+                        ${keyObj.name} (${keyObj.key})
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function saveAndContinue() {
+            if (routingKeys.length > 0) {
+                localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+                document.getElementById('setupSection').classList.add('hidden');
+                document.getElementById('controlSection').classList.remove('hidden');
+                updateKeysListMain();
+                updateSpecificKeyDropdown();
+            } else {
+                alert('Please add at least one routing key');
+            }
+        }
+
+        function toggleIterationInputs() {
+            const iterationControls = document.getElementById('iterationControls');
+            iterationControls.classList.toggle('hidden', document.getElementById('runMode').value === 'single');
+        }
+
+        function buildEventPayload(selectedKey) {
+            const customDetails = {};
+            customDetailPairs.forEach(pair => {
+                if (pair.key.trim()) {
+                    customDetails[pair.key] = pair.value;
+                }
+            });
+
+            const payload = {
+                routing_key: selectedKey,
+                event_action: "trigger",
+                payload: {
+                    summary: document.getElementById('eventSummary').value || "Test alert",
+                    source: document.getElementById('eventSource').value || "PD Event Generator",
+                    severity: document.getElementById('severityMode').value
+                }
+            };
+
+            // Add optional fields if they have values
+            const group = document.getElementById('eventGroup').value;
+            if (group) payload.payload.group = group;
+
+            const component = document.getElementById('eventComponent').value;
+            if (component) payload.payload.component = component;
+
+            if (Object.keys(customDetails).length > 0) {
+                payload.payload.custom_details = customDetails;
+            }
+
+            return payload;
+        }
+
+        function startGenerator() {
+            if (routingKeys.length === 0) {
+                alert('Please add at least one routing key');
+                return;
+            }
+
+            const keySelectionMode = document.getElementById('keySelectionMode').value;
+            if (keySelectionMode === 'specific') {
+                const checkedKeys = Array.from(document.querySelectorAll('input[name="specific-keys"]:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                if (checkedKeys.length === 0) {
+                    alert('Please select at least one key in specific mode');
+                    return;
+                }
+                
+                selectedKeysQueue = [...checkedKeys];
+                totalSelectedKeys = checkedKeys.length;
+            }
+
+            isRunning = true;
+            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
+
+            const runMode = document.getElementById('runMode').value;
+            const baseIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+            
+            if (keySelectionMode === 'specific') {
+                totalIterations = baseIterations * totalSelectedKeys;
+            } else {
+                totalIterations = baseIterations;
+            }
+            
+            currentIteration = 0;
+            runIteration();
+        }
+
+        function stopGenerator() {
+            isRunning = false;
+            clearInterval(countdownInterval);
+            document.querySelector('button[onclick="startGenerator()"]').disabled = false;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = true;
+            document.getElementById('countdown').innerHTML = '';
+            logStatus('Generator stopped by user');
+        }
+
+        function runIteration() {
+            if (!isRunning) return;
+
+            currentIteration++;
+            
+            let selectedKey;
+            const keySelectionMode = document.getElementById('keySelectionMode').value;
+            if (keySelectionMode === 'random') {
+                const randomKeyObj = routingKeys[Math.floor(Math.random() * routingKeys.length)];
+                selectedKey = randomKeyObj.key;
+            } else {
+                if (selectedKeysQueue.length === 0) {
+                    const checkedKeys = Array.from(document.querySelectorAll('input[name="specific-keys"]:checked'))
+                        .map(checkbox => checkbox.value);
+                    selectedKeysQueue = [...checkedKeys];
+                }
+                selectedKey = selectedKeysQueue.shift();
+            }
+
+            const keyObj = routingKeys.find(k => k.key === selectedKey);
+            const keyName = keyObj ? keyObj.name : selectedKey;
+
+            const eventPayload = buildEventPayload(selectedKey);
+
+            logStatus(`Running iteration ${currentIteration} of ${totalIterations}`);
+            logStatus(`Using routing key: ${keyName} (${selectedKey})`);
+            logStatus(`Sending payload with severity: ${eventPayload.payload.severity}`);
+
+            fetch('https://events.pagerduty.com/v2/enqueue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(eventPayload)
+            }).catch(error => logStatus(`Error: ${error.message}`));
+
+            if (currentIteration < totalIterations && isRunning) {
+                const delay = parseInt(document.getElementById('delay').value);
+                startCountdown(delay);
+                setTimeout(runIteration, delay * 1000);
+            } else if (isRunning) {
+                stopGenerator();
+                logStatus('Generator completed all iterations');
+            }
+        }
+
+        function startCountdown(seconds) {
+            let remaining = seconds;
+            document.getElementById('countdown').innerHTML = `Next iteration in: ${remaining} seconds`;
+
+            countdownInterval = setInterval(() => {
+                remaining--;
+                if (remaining >= 0) {
+                    document.getElementById('countdown').innerHTML = `Next iteration in: ${remaining} seconds`;
+                } else {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown').innerHTML = '';
+                }
+            }, 1000);
+        }
+
+        function logStatus(message) {
+            const statusLog = document.getElementById('statusLog');
+            const timestamp = new Date().toLocaleTimeString();
+            statusLog.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+    </script>
+</body>
+</html>
