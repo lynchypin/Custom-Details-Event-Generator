@@ -104,16 +104,20 @@
         }
         .form-check {
             margin-bottom: 0.5rem;
+            padding-left: 2rem;
         }
         .form-check:last-child {
             margin-bottom: 0;
         }
         .form-check-label {
             color: white !important;
+            cursor: pointer;
+            user-select: none;
         }
         .form-check-input {
             background-color: #006666;
             border-color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
         }
         .form-check-input:checked {
             background-color: #048a24;
@@ -132,6 +136,10 @@
         .btn-primary:hover {
             background-color: #005555;
             border-color: #005555;
+        }
+        .btn-primary:disabled {
+            background-color: #004444;
+            border-color: #004444;
         }
         .btn-success {
             background-color: #006666;
@@ -152,6 +160,9 @@
         }
         .btn-danger {
             color: white !important;
+        }
+        .btn-danger:disabled {
+            opacity: 0.65;
         }
         .btn-info {
             color: white !important;
@@ -195,7 +206,13 @@
             border-color: rgba(255, 255, 255, 0.2);
         }
         .hidden {
-            display: none;
+            display: none !important;
+        }
+        .key-selection-wrapper {
+            margin-top: 0.5rem;
+        }
+        .key-selection-wrapper .form-check {
+            margin: 0.5rem 0;
         }
     </style>
 </head>
@@ -265,11 +282,11 @@
                     <div id="standardControls">
                         <div class="mb-3">
                             <label class="form-label">Routing Key Selection</label>
-                            <select id="keySelectionMode" class="form-select">
+                            <select id="keySelectionMode" class="form-select" onchange="toggleKeySelectionMode('standard')">
                                 <option value="random">Random (Default)</option>
                                 <option value="specific">Specific Keys</option>
                             </select>
-                            <div id="specificKeySelection" class="mt-2 hidden">
+                            <div id="specificKeySelection" class="key-selection-wrapper hidden">
                                 <div class="key-selection-box">
                                     <div id="specificKeys">
                                         <!-- Checkboxes will be populated here -->
@@ -302,11 +319,11 @@
                     <div id="customControls" class="hidden">
                         <div class="mb-3">
                             <label class="form-label">Routing Key Selection</label>
-                            <select id="customKeySelectionMode" class="form-select">
+                            <select id="customKeySelectionMode" class="form-select" onchange="toggleKeySelectionMode('custom')">
                                 <option value="random">Random (Default)</option>
                                 <option value="specific">Specific Keys</option>
                             </select>
-                            <div id="customSpecificKeySelection" class="mt-2 hidden">
+                            <div id="customSpecificKeySelection" class="key-selection-wrapper hidden">
                                 <div class="key-selection-box">
                                     <div id="customSpecificKeys">
                                         <!-- Checkboxes will be populated here -->
@@ -358,7 +375,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Custom Details</label>
+                            <label class="form-label">Custom Details (JSON format)</label>
                             <textarea id="customDetailsText" class="form-control" 
                                     placeholder="Enter custom details in JSON format"
                                     onchange="updatePayloadPreview()"></textarea>
@@ -408,6 +425,7 @@
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Initialize variables
@@ -442,24 +460,43 @@
                 updateSavedPayloadsDropdown();
             }
 
-            // Add event listeners for key selection modes
-            document.getElementById('keySelectionMode').addEventListener('change', function() {
-                const specificKeySelection = document.getElementById('specificKeySelection');
-                specificKeySelection.classList.toggle('hidden', this.value === 'random');
-            });
+            // Initialize event listeners
+            initializeEventListeners();
+        };
 
-            document.getElementById('customKeySelectionMode').addEventListener('change', function() {
-                const specificKeySelection = document.getElementById('customSpecificKeySelection');
-                specificKeySelection.classList.toggle('hidden', this.value === 'random');
-            });
-
+        function initializeEventListeners() {
             // Add event listeners for payload preview
             const previewFields = ['eventSummary', 'customSeverity', 'eventSource', 
                                  'eventGroup', 'eventComponent', 'eventClass', 'customDetailsText'];
             previewFields.forEach(field => {
                 document.getElementById(field).addEventListener('input', updatePayloadPreview);
             });
-        };
+
+            // Add event listeners for key selection modes
+            document.getElementById('keySelectionMode').addEventListener('change', function() {
+                toggleKeySelectionMode('standard');
+            });
+
+            document.getElementById('customKeySelectionMode').addEventListener('change', function() {
+                toggleKeySelectionMode('custom');
+            });
+        }
+
+        function toggleKeySelectionMode(mode) {
+            const selectionMode = mode === 'standard' ? 
+                document.getElementById('keySelectionMode').value :
+                document.getElementById('customKeySelectionMode').value;
+            
+            const selectionDiv = mode === 'standard' ? 
+                document.getElementById('specificKeySelection') :
+                document.getElementById('customSpecificKeySelection');
+            
+            selectionDiv.classList.toggle('hidden', selectionMode === 'random');
+            
+            if (selectionMode === 'specific') {
+                updateSpecificKeyDropdown();
+            }
+        }
 
         function addKey() {
             const keyInput = document.getElementById('newKeyInput');
@@ -538,20 +575,32 @@
         }
 
         function updateSpecificKeyDropdown() {
-            const standardHtml = routingKeys.map(keyObj => `
+            const standardKeysHtml = routingKeys.map(keyObj => `
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" 
                            value="${keyObj.key}" 
-                           id="key-${keyObj.key}" 
+                           id="standard-key-${keyObj.key}" 
                            name="specific-keys">
-                    <label class="form-check-label" for="key-${keyObj.key}">
+                    <label class="form-check-label" for="standard-key-${keyObj.key}">
                         ${keyObj.name} (${keyObj.key})
                     </label>
                 </div>
             `).join('');
 
-            document.getElementById('specificKeys').innerHTML = standardHtml;
-            document.getElementById('customSpecificKeys').innerHTML = standardHtml;
+            const customKeysHtml = routingKeys.map(keyObj => `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" 
+                           value="${keyObj.key}" 
+                           id="custom-key-${keyObj.key}" 
+                           name="custom-specific-keys">
+                    <label class="form-check-label" for="custom-key-${keyObj.key}">
+                        ${keyObj.name} (${keyObj.key})
+                    </label>
+                </div>
+            `).join('');
+
+            document.getElementById('specificKeys').innerHTML = standardKeysHtml;
+            document.getElementById('customSpecificKeys').innerHTML = customKeysHtml;
         }
 
         function saveAndContinue() {
@@ -571,12 +620,10 @@
             const standardControls = document.getElementById('standardControls');
             const customControls = document.getElementById('customControls');
             
-            if (eventType === 'standard') {
-                standardControls.classList.remove('hidden');
-                customControls.classList.add('hidden');
-            } else {
-                standardControls.classList.add('hidden');
-                customControls.classList.remove('hidden');
+            standardControls.classList.toggle('hidden', eventType !== 'standard');
+            customControls.classList.toggle('hidden', eventType !== 'custom');
+            
+            if (eventType === 'custom') {
                 updatePayloadPreview();
             }
         }
@@ -587,7 +634,7 @@
                 document.getElementById('runMode').value === 'single');
         }
 
-        function updatePayloadPreview() {
+function updatePayloadPreview() {
             let customDetails = {};
             try {
                 const customDetailsText = document.getElementById('customDetailsText').value;
@@ -713,6 +760,12 @@
                 ).join('');
         }
 
+        function getSelectedKeys(mode) {
+            const selector = mode === 'standard' ? 'specific-keys' : 'custom-specific-keys';
+            return Array.from(document.querySelectorAll(`input[name="${selector}"]:checked`))
+                .map(checkbox => checkbox.value);
+        }
+
         function startGenerator() {
             if (routingKeys.length === 0) {
                 alert('Please add at least one routing key');
@@ -730,16 +783,13 @@
         function startStandardGenerator() {
             const keySelectionMode = document.getElementById('keySelectionMode').value;
             if (keySelectionMode === 'specific') {
-                const checkedKeys = Array.from(document.querySelectorAll('input[name="specific-keys"]:checked'))
-                    .map(checkbox => checkbox.value);
-                
-                if (checkedKeys.length === 0) {
+                const selectedKeys = getSelectedKeys('standard');
+                if (selectedKeys.length === 0) {
                     alert('Please select at least one key in specific mode');
                     return;
                 }
-                
-                selectedKeysQueue = [...checkedKeys];
-                totalSelectedKeys = checkedKeys.length;
+                selectedKeysQueue = [...selectedKeys];
+                totalSelectedKeys = selectedKeys.length;
             }
 
             isRunning = true;
@@ -750,28 +800,6 @@
             totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
             currentIteration = 0;
             runStandardIteration();
-        }
-
-        function startCustomGenerator() {
-            const keySelectionMode = document.getElementById('customKeySelectionMode').value;
-            if (keySelectionMode === 'specific') {
-                const checkedKeys = Array.from(document.querySelectorAll('input[name="custom-specific-keys"]:checked'))
-                    .map(checkbox => checkbox.value);
-                
-                if (checkedKeys.length === 0) {
-                    alert('Please select at least one key in specific mode');
-                    return;
-                }
-            }
-
-            isRunning = true;
-            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
-            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
-
-            const runMode = document.getElementById('runMode').value;
-            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
-            currentIteration = 0;
-            runCustomIteration();
         }
 
         function runStandardIteration() {
@@ -786,9 +814,7 @@
                 selectedKey = randomKeyObj.key;
             } else {
                 if (selectedKeysQueue.length === 0) {
-                    const checkedKeys = Array.from(document.querySelectorAll('input[name="specific-keys"]:checked'))
-                        .map(checkbox => checkbox.value);
-                    selectedKeysQueue = [...checkedKeys];
+                    selectedKeysQueue = [...getSelectedKeys('standard')];
                 }
                 selectedKey = selectedKeysQueue.shift();
             }
@@ -826,7 +852,14 @@
                         severity: selectedSeverity
                     }
                 })
-            }).catch(error => logStatus(`Error: ${error.message}`));
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                logStatus('Event sent successfully');
+            })
+            .catch(error => logStatus(`Error: ${error.message}`));
 
             if (currentIteration < totalIterations && isRunning) {
                 const delay = parseInt(document.getElementById('delay').value);
@@ -836,6 +869,28 @@
                 stopGenerator();
                 logStatus('Generator completed all iterations');
             }
+        }
+
+        function startCustomGenerator() {
+            const keySelectionMode = document.getElementById('customKeySelectionMode').value;
+            if (keySelectionMode === 'specific') {
+                const selectedKeys = getSelectedKeys('custom');
+                if (selectedKeys.length === 0) {
+                    alert('Please select at least one key in specific mode');
+                    return;
+                }
+                selectedKeysQueue = [...selectedKeys];
+                totalSelectedKeys = selectedKeys.length;
+            }
+
+            isRunning = true;
+            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
+
+            const runMode = document.getElementById('runMode').value;
+            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+            currentIteration = 0;
+            runCustomIteration();
         }
 
         function runCustomIteration() {
@@ -849,14 +904,10 @@
                 const randomKeyObj = routingKeys[Math.floor(Math.random() * routingKeys.length)];
                 selectedKey = randomKeyObj.key;
             } else {
-                const checkedKeys = Array.from(document.querySelectorAll('input[name="custom-specific-keys"]:checked'))
-                    .map(checkbox => checkbox.value);
-                if (checkedKeys.length === 0) {
-                    alert('Please select at least one key in specific mode');
-                    stopGenerator();
-                    return;
+                if (selectedKeysQueue.length === 0) {
+                    selectedKeysQueue = [...getSelectedKeys('custom')];
                 }
-                selectedKey = checkedKeys[Math.floor(Math.random() * checkedKeys.length)];
+                selectedKey = selectedKeysQueue.shift();
             }
 
             const keyObj = routingKeys.find(k => k.key === selectedKey);
@@ -907,7 +958,14 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(payload)
-            }).catch(error => logStatus(`Error: ${error.message}`));
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                logStatus('Event sent successfully');
+            })
+            .catch(error => logStatus(`Error: ${error.message}`));
 
             if (currentIteration < totalIterations && isRunning) {
                 const delay = parseInt(document.getElementById('delay').value);
