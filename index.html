@@ -296,14 +296,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Run Mode</label>
-                            <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
-                                <option value="single">Single Run</option>
-                                <option value="multiple">Multiple Runs</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
                             <label class="form-label">Event Severity</label>
                             <select id="severityMode" class="form-select">
                                 <option value="random">Random (Default)</option>
@@ -398,16 +390,28 @@
                         </div>
                     </div>
 
-                    <div id="iterationControls" class="hidden">
+                    <!-- Run Mode and Iteration Controls (moved after both standard and custom controls) -->
+                    <div class="mb-4">
                         <div class="mb-3">
-                            <label class="form-label">Number of Iterations</label>
-                            <input type="number" id="iterations" class="form-control" min="1" max="100" value="1">
+                            <label class="form-label">Run Mode</label>
+                            <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
+                                <option value="single">Single Run</option>
+                                <option value="multiple">Multiple Runs</option>
+                            </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Delay Between Iterations (seconds)</label>
-                            <input type="number" id="delay" class="form-control" min="0" max="3600" value="300">
+
+                        <div id="iterationControls" class="hidden">
+                            <div class="mb-3">
+                                <label class="form-label">Number of Iterations</label>
+                                <input type="number" id="iterations" class="form-control" min="1" max="100" value="1">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Delay Between Iterations (seconds)</label>
+                                <input type="number" id="delay" class="form-control" min="0" max="3600" value="300">
+                            </div>
                         </div>
                     </div>
+
                     <button onclick="startGenerator()" class="btn btn-primary">Start Generator</button>
                     <button onclick="stopGenerator()" class="btn btn-danger" disabled>Stop Generator</button>
                 </div>
@@ -602,7 +606,6 @@
             document.getElementById('specificKeys').innerHTML = standardKeysHtml;
             document.getElementById('customSpecificKeys').innerHTML = customKeysHtml;
         }
-
         function saveAndContinue() {
             if (routingKeys.length > 0) {
                 localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
@@ -623,6 +626,10 @@
             standardControls.classList.toggle('hidden', eventType !== 'standard');
             customControls.classList.toggle('hidden', eventType !== 'custom');
             
+            // Keep iteration controls visible when switching modes
+            const runMode = document.getElementById('runMode').value;
+            document.getElementById('iterationControls').classList.toggle('hidden', runMode === 'single');
+            
             if (eventType === 'custom') {
                 updatePayloadPreview();
             }
@@ -630,11 +637,11 @@
 
         function toggleIterationInputs() {
             const iterationControls = document.getElementById('iterationControls');
-            iterationControls.classList.toggle('hidden', 
-                document.getElementById('runMode').value === 'single');
+            const runMode = document.getElementById('runMode').value;
+            iterationControls.classList.toggle('hidden', runMode === 'single');
         }
 
-function updatePayloadPreview() {
+        function updatePayloadPreview() {
             let customDetails = {};
             try {
                 const customDetailsText = document.getElementById('customDetailsText').value;
@@ -802,6 +809,28 @@ function updatePayloadPreview() {
             runStandardIteration();
         }
 
+        function startCustomGenerator() {
+            const keySelectionMode = document.getElementById('customKeySelectionMode').value;
+            if (keySelectionMode === 'specific') {
+                const selectedKeys = getSelectedKeys('custom');
+                if (selectedKeys.length === 0) {
+                    alert('Please select at least one key in specific mode');
+                    return;
+                }
+                selectedKeysQueue = [...selectedKeys];
+                totalSelectedKeys = selectedKeys.length;
+            }
+
+            isRunning = true;
+            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
+            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
+
+            const runMode = document.getElementById('runMode').value;
+            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+            currentIteration = 0;
+            runCustomIteration();
+        }
+
         function runStandardIteration() {
             if (!isRunning) return;
 
@@ -869,28 +898,6 @@ function updatePayloadPreview() {
                 stopGenerator();
                 logStatus('Generator completed all iterations');
             }
-        }
-
-        function startCustomGenerator() {
-            const keySelectionMode = document.getElementById('customKeySelectionMode').value;
-            if (keySelectionMode === 'specific') {
-                const selectedKeys = getSelectedKeys('custom');
-                if (selectedKeys.length === 0) {
-                    alert('Please select at least one key in specific mode');
-                    return;
-                }
-                selectedKeysQueue = [...selectedKeys];
-                totalSelectedKeys = selectedKeys.length;
-            }
-
-            isRunning = true;
-            document.querySelector('button[onclick="startGenerator()"]').disabled = true;
-            document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
-
-            const runMode = document.getElementById('runMode').value;
-            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
-            currentIteration = 0;
-            runCustomIteration();
         }
 
         function runCustomIteration() {
