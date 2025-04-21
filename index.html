@@ -14,64 +14,79 @@
         .card {
             background-color: #005a2f;
             color: white !important;
+            margin-bottom: 1rem;
         }
         .card-header {
             background-color: #006666 !important;
             color: white !important;
+            padding: 1rem;
         }
         .card-header h5 {
             color: white !important;
+            margin: 0;
+        }
+        .card-body {
+            padding: 1rem;
         }
         h2 {
             color: white !important;
+            margin-bottom: 1.5rem;
         }
         .key-item {
             background-color: #005a2f;
             color: white !important;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .saved-payload-item {
             background-color: #005a2f;
             color: white !important;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
             border-radius: 5px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .status-log {
             background-color: #005a2f;
             color: white !important;
             height: 200px;
             overflow-y: auto;
-            padding: 10px;
+            padding: 1rem;
             border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .form-control {
             background-color: #005a2f;
             color: white !important;
-            border-color: #006666;
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .form-control:focus {
             background-color: #005a2f;
             color: white !important;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
         }
         .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.7) !important;
+            color: rgba(255, 255, 255, 0.5) !important;
         }
         .form-select {
             background-color: #005a2f;
             color: white !important;
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .form-select:focus {
             background-color: #005a2f;
             color: white !important;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
         }
         .form-select option {
             background-color: #005a2f;
@@ -80,39 +95,34 @@
         .key-selection-box {
             background-color: #005a2f;
             color: white !important;
-            padding: 10px;
+            padding: 1rem;
             border-radius: 5px;
             max-height: 200px;
             overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 0.5rem;
+        }
+        .form-check {
+            margin-bottom: 0.5rem;
+        }
+        .form-check:last-child {
+            margin-bottom: 0;
         }
         .form-check-label {
             color: white !important;
         }
         .form-check-input {
             background-color: #006666;
-            border-color: white;
+            border-color: rgba(255, 255, 255, 0.5);
         }
         .form-check-input:checked {
             background-color: #048a24;
-            border-color: white;
+            border-color: #048a24;
         }
         .alert-info {
             background-color: #005a2f;
             color: white !important;
             border-color: #006666;
-        }
-        .collapse-toggle {
-            cursor: pointer;
-            user-select: none;
-            color: white !important;
-        }
-        .collapse-toggle:after {
-            content: ' ▼';
-            font-size: 0.8em;
-            color: white !important;
-        }
-        .collapse-toggle.collapsed:after {
-            content: ' ▶';
         }
         .btn-primary {
             background-color: #006666;
@@ -155,16 +165,34 @@
         }
         .custom-details {
             background-color: #005a2f;
-            padding: 15px;
+            padding: 1rem;
             border-radius: 5px;
-            margin-top: 15px;
+            margin-top: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .countdown {
             color: white !important;
+            margin-bottom: 1rem;
+            font-weight: bold;
         }
-        /* Override any bootstrap text colors */
-        * {
+        textarea.form-control {
+            min-height: 100px;
+            font-family: monospace;
+        }
+        .payload-preview {
+            background-color: #005a2f;
             color: white !important;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .input-group > .form-control,
+        .input-group > .form-select {
+            background-color: #005a2f;
+            color: white !important;
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .hidden {
             display: none;
@@ -205,17 +233,15 @@
 
             <!-- Routing Keys Management -->
             <div class="card mb-4">
-                <div class="card-header collapse-toggle" data-bs-toggle="collapse" data-bs-target="#keysManagement">
-                    <h5 class="mb-0">Manage Routing Keys</h5>
+                <div class="card-header">
+                    <h5>Manage Routing Keys</h5>
                 </div>
-                <div id="keysManagement" class="collapse show">
-                    <div class="card-body">
-                        <div id="mainKeysList"></div>
-                        <div class="input-group mt-3">
-                            <input type="text" id="mainNewKeyInput" class="form-control" placeholder="Enter new routing key">
-                            <input type="text" id="mainNewKeyName" class="form-control" placeholder="Enter key name (optional)">
-                            <button class="btn btn-outline-primary" onclick="addKeyMain()">Add New Key</button>
-                        </div>
+                <div class="card-body">
+                    <div id="mainKeysList"></div>
+                    <div class="input-group mt-3">
+                        <input type="text" id="mainNewKeyInput" class="form-control" placeholder="Enter new routing key">
+                        <input type="text" id="mainNewKeyName" class="form-control" placeholder="Enter key name (optional)">
+                        <button class="btn btn-outline-primary" onclick="addKeyMain()">Add New Key</button>
                     </div>
                 </div>
             </div>
@@ -223,7 +249,7 @@
             <!-- Event Generator Controls -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Event Generator Controls</h5>
+                    <h5>Event Generator Controls</h5>
                 </div>
                 <div class="card-body">
                     <!-- Event Type Selection -->
@@ -293,7 +319,6 @@
                             <label class="form-label">Saved Payloads</label>
                             <select id="savedPayloadsDropdown" class="form-select" onchange="loadSavedPayload()">
                                 <option value="">Create New Payload</option>
-                                <!-- Options will be populated here -->
                             </select>
                         </div>
 
@@ -334,23 +359,25 @@
 
                         <div class="mb-3">
                             <label class="form-label">Custom Details</label>
-                            <div id="customDetails"></div>
-                            <button onclick="addCustomDetailPair()" class="btn btn-outline-primary mt-2">
-                                Add Custom Detail
-                            </button>
+                            <textarea id="customDetailsText" class="form-control" 
+                                    placeholder="Enter custom details in JSON format"
+                                    onchange="updatePayloadPreview()"></textarea>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Save Current Payload</label>
                             <div class="input-group">
-                                <input type="text" id="payloadName" class="form-control" placeholder="Enter name for this payload">
-                                <button onclick="saveCurrentPayload()" class="btn btn-outline-primary">Save Payload</button>
+                                <input type="text" id="payloadName" class="form-control" 
+                                       placeholder="Enter name for this payload">
+                                <button onclick="saveCurrentPayload()" class="btn btn-outline-primary">
+                                    Save Payload
+                                </button>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Payload Preview</label>
-                            <pre id="previewPayload" class="custom-details"></pre>
+                            <pre id="previewPayload" class="payload-preview"></pre>
                         </div>
                     </div>
 
@@ -372,10 +399,10 @@
             <!-- Status Log -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Status Log</h5>
+                    <h5>Status Log</h5>
                 </div>
                 <div class="card-body">
-                    <div id="countdown" class="countdown mb-2"></div>
+                    <div id="countdown" class="countdown"></div>
                     <div id="statusLog" class="status-log"></div>
                 </div>
             </div>
@@ -392,7 +419,6 @@
         let countdownInterval;
         let selectedKeysQueue = [];
         let totalSelectedKeys = 0;
-        let customDetailPairs = [];
 
         // Load saved keys and payloads on startup
         window.onload = function() {
@@ -413,7 +439,6 @@
             const savedPayloadsData = localStorage.getItem('pdSavedPayloads');
             if (savedPayloadsData) {
                 savedPayloads = JSON.parse(savedPayloadsData);
-                updateSavedPayloadsList();
                 updateSavedPayloadsDropdown();
             }
 
@@ -430,17 +455,9 @@
 
             // Add event listeners for payload preview
             const previewFields = ['eventSummary', 'customSeverity', 'eventSource', 
-                                 'eventGroup', 'eventComponent', 'eventClass'];
+                                 'eventGroup', 'eventComponent', 'eventClass', 'customDetailsText'];
             previewFields.forEach(field => {
                 document.getElementById(field).addEventListener('input', updatePayloadPreview);
-            });
-
-            // Initialize Bootstrap collapse functionality
-            var collapseElements = document.querySelectorAll('.collapse-toggle');
-            collapseElements.forEach(function(element) {
-                element.addEventListener('click', function() {
-                    this.classList.toggle('collapsed');
-                });
             });
         };
 
@@ -521,9 +538,7 @@
         }
 
         function updateSpecificKeyDropdown() {
-            // Update standard mode dropdown
-            const specificKeysDiv = document.getElementById('specificKeys');
-            specificKeysDiv.innerHTML = routingKeys.map(keyObj => `
+            const standardHtml = routingKeys.map(keyObj => `
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" 
                            value="${keyObj.key}" 
@@ -535,19 +550,8 @@
                 </div>
             `).join('');
 
-            // Update custom mode dropdown
-            const customSpecificKeysDiv = document.getElementById('customSpecificKeys');
-            customSpecificKeysDiv.innerHTML = routingKeys.map(keyObj => `
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" 
-                           value="${keyObj.key}" 
-                           id="custom-key-${keyObj.key}" 
-                           name="custom-specific-keys">
-                    <label class="form-check-label" for="custom-key-${keyObj.key}">
-                        ${keyObj.name} (${keyObj.key})
-                    </label>
-                </div>
-            `).join('');
+            document.getElementById('specificKeys').innerHTML = standardHtml;
+            document.getElementById('customSpecificKeys').innerHTML = standardHtml;
         }
 
         function saveAndContinue() {
@@ -583,52 +587,16 @@
                 document.getElementById('runMode').value === 'single');
         }
 
-        // Custom Details Management
-        function addCustomDetailPair() {
-            customDetailPairs.push({ key: '', value: '' });
-            updateCustomDetailPairs();
-        }
-
-        function updateCustomDetailPairs() {
-            const container = document.getElementById('customDetails');
-            container.innerHTML = customDetailPairs.map((pair, index) => `
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control" 
-                           placeholder="Key" 
-                           value="${pair.key}"
-                           onchange="updateCustomDetailKey(${index}, this.value)">
-                    <input type="text" class="form-control" 
-                           placeholder="Value" 
-                           value="${pair.value}"
-                           onchange="updateCustomDetailValue(${index}, this.value)">
-                    <button class="btn btn-danger" onclick="removeCustomDetailPair(${index})">Remove</button>
-                </div>
-            `).join('');
-            updatePayloadPreview();
-        }
-
-        function updateCustomDetailKey(index, value) {
-            customDetailPairs[index].key = value;
-            updatePayloadPreview();
-        }
-
-        function updateCustomDetailValue(index, value) {
-            customDetailPairs[index].value = value;
-            updatePayloadPreview();
-        }
-
-        function removeCustomDetailPair(index) {
-            customDetailPairs.splice(index, 1);
-            updateCustomDetailPairs();
-        }
-
-function updatePayloadPreview() {
-            const customDetails = {};
-            customDetailPairs.forEach(pair => {
-                if (pair.key.trim()) {
-                    customDetails[pair.key] = pair.value;
+        function updatePayloadPreview() {
+            let customDetails = {};
+            try {
+                const customDetailsText = document.getElementById('customDetailsText').value;
+                if (customDetailsText.trim()) {
+                    customDetails = JSON.parse(customDetailsText);
                 }
-            });
+            } catch (e) {
+                customDetails = { error: "Invalid JSON format" };
+            }
 
             const payload = {
                 routing_key: "YOUR_ROUTING_KEY",
@@ -639,7 +607,7 @@ function updatePayloadPreview() {
                     summary: document.getElementById('eventSummary').value || "Test alert",
                     severity: document.getElementById('customSeverity').value,
                     source: document.getElementById('eventSource').value || "PD Event Generator",
-                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined,
+                    custom_details: customDetails,
                     component: document.getElementById('eventComponent').value || undefined,
                     group: document.getElementById('eventGroup').value || undefined,
                     class: document.getElementById('eventClass').value || undefined
@@ -664,12 +632,16 @@ function updatePayloadPreview() {
                 return;
             }
 
-            const customDetails = {};
-            customDetailPairs.forEach(pair => {
-                if (pair.key.trim()) {
-                    customDetails[pair.key] = pair.value;
+            let customDetails = {};
+            try {
+                const customDetailsText = document.getElementById('customDetailsText').value;
+                if (customDetailsText.trim()) {
+                    customDetails = JSON.parse(customDetailsText);
                 }
-            });
+            } catch (e) {
+                alert('Invalid JSON format in custom details');
+                return;
+            }
 
             const payload = {
                 name: name,
@@ -696,7 +668,6 @@ function updatePayloadPreview() {
             }
 
             localStorage.setItem('pdSavedPayloads', JSON.stringify(savedPayloads));
-            updateSavedPayloadsList();
             updateSavedPayloadsDropdown();
             document.getElementById('payloadName').value = '';
             logStatus(`Payload "${name}" saved successfully`);
@@ -717,14 +688,8 @@ function updatePayloadPreview() {
                 document.getElementById('eventGroup').value = payload.data.group;
                 document.getElementById('eventComponent').value = payload.data.component;
                 document.getElementById('eventClass').value = payload.data.class;
-
-                customDetailPairs = [];
-                if (payload.data.custom_details) {
-                    Object.entries(payload.data.custom_details).forEach(([key, value]) => {
-                        customDetailPairs.push({ key, value });
-                    });
-                }
-                updateCustomDetailPairs();
+                document.getElementById('customDetailsText').value = 
+                    JSON.stringify(payload.data.custom_details, null, 2);
                 updatePayloadPreview();
             }
         }
@@ -736,9 +701,16 @@ function updatePayloadPreview() {
             document.getElementById('eventGroup').value = '';
             document.getElementById('eventComponent').value = '';
             document.getElementById('eventClass').value = '';
-            customDetailPairs = [];
-            updateCustomDetailPairs();
+            document.getElementById('customDetailsText').value = '';
             updatePayloadPreview();
+        }
+
+        function updateSavedPayloadsDropdown() {
+            const dropdown = document.getElementById('savedPayloadsDropdown');
+            dropdown.innerHTML = '<option value="">Create New Payload</option>' +
+                savedPayloads.map(payload => 
+                    `<option value="${payload.name}">${payload.name}</option>`
+                ).join('');
         }
 
         function startGenerator() {
@@ -890,12 +862,17 @@ function updatePayloadPreview() {
             const keyObj = routingKeys.find(k => k.key === selectedKey);
             const keyName = keyObj ? keyObj.name : selectedKey;
 
-            const customDetails = {};
-            customDetailPairs.forEach(pair => {
-                if (pair.key.trim()) {
-                    customDetails[pair.key] = pair.value;
+            let customDetails = {};
+            try {
+                const customDetailsText = document.getElementById('customDetailsText').value;
+                if (customDetailsText.trim()) {
+                    customDetails = JSON.parse(customDetailsText);
                 }
-            });
+            } catch (e) {
+                logStatus('Error: Invalid JSON format in custom details');
+                stopGenerator();
+                return;
+            }
 
             const payload = {
                 routing_key: selectedKey,
@@ -906,7 +883,7 @@ function updatePayloadPreview() {
                     summary: document.getElementById('eventSummary').value || "Test alert",
                     severity: document.getElementById('customSeverity').value,
                     source: document.getElementById('eventSource').value || "PD Event Generator",
-                    custom_details: Object.keys(customDetails).length > 0 ? customDetails : undefined,
+                    custom_details: customDetails,
                     component: document.getElementById('eventComponent').value || undefined,
                     group: document.getElementById('eventGroup').value || undefined,
                     class: document.getElementById('eventClass').value || undefined
