@@ -22,6 +22,7 @@
             padding: 1rem;
             cursor: pointer;
             user-select: none;
+            transition: background-color 0.3s ease;
         }
         .card-header:hover {
             background-color: #005555 !important;
@@ -29,16 +30,21 @@
         .card-header h5 {
             color: white !important;
             margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .collapse-icon {
-            float: right;
             transition: transform 0.3s ease;
+            font-size: 0.8em;
+            margin-left: 10px;
         }
         .collapse-icon.collapsed {
             transform: rotate(-90deg);
         }
         .card-body {
             padding: 1rem;
+            transition: height 0.3s ease;
         }
         h2 {
             color: white !important;
@@ -239,6 +245,12 @@
         .key-selection-wrapper .form-check {
             margin: 0.5rem 0;
         }
+        .status-message {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -300,6 +312,28 @@
                     </h5>
                 </div>
                 <div class="card-body" id="generatorControlsSection">
+                    <!-- Run Mode and Iteration Controls -->
+                    <div class="mb-4">
+                        <div class="mb-3">
+                            <label class="form-label">Run Mode</label>
+                            <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
+                                <option value="single">Single Run</option>
+                                <option value="multiple">Multiple Runs</option>
+                            </select>
+                        </div>
+
+                        <div id="iterationControls" class="hidden">
+                            <div class="mb-3">
+                                <label class="form-label">Number of Iterations per Service</label>
+                                <input type="number" id="iterations" class="form-control" min="1" max="100" value="1">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Delay Between Iterations (seconds)</label>
+                                <input type="number" id="delay" class="form-control" min="0" max="3600" value="300">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Event Type Selection -->
                     <div class="mb-3">
                         <label class="form-label">Event Type</label>
@@ -426,28 +460,7 @@
                         </div>
                     </div>
 
-                    <!-- Run Mode and Iteration Controls -->
-                    <div class="mb-4">
-                        <div class="mb-3">
-                            <label class="form-label">Run Mode</label>
-                            <select id="runMode" class="form-select" onchange="toggleIterationInputs()">
-                                <option value="single">Single Run</option>
-                                <option value="multiple">Multiple Runs</option>
-                            </select>
-                        </div>
-
-                        <div id="iterationControls" class="hidden">
-                            <div class="mb-3">
-                                <label class="form-label">Number of Iterations</label>
-                                <input type="number" id="iterations" class="form-control" min="1" max="100" value="1">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Delay Between Iterations (seconds)</label>
-                                <input type="number" id="delay" class="form-control" min="0" max="3600" value="300">
-                            </div>
-                        </div>
-                    </div>
-
+                    <div id="totalIncidentsInfo" class="status-message mb-3"></div>
                     <button onclick="startGenerator()" class="btn btn-primary">Start Generator</button>
                     <button onclick="stopGenerator()" class="btn btn-danger" disabled>Stop Generator</button>
                 </div>
@@ -526,11 +539,53 @@
             // Add event listeners for key selection modes
             document.getElementById('keySelectionMode').addEventListener('change', function() {
                 toggleKeySelectionMode('standard');
+                updateTotalIncidents();
             });
 
             document.getElementById('customKeySelectionMode').addEventListener('change', function() {
                 toggleKeySelectionMode('custom');
+                updateTotalIncidents();
             });
+
+            // Add event listener for iteration count changes
+            document.getElementById('iterations').addEventListener('change', updateTotalIncidents);
+            document.getElementById('iterations').addEventListener('input', updateTotalIncidents);
+
+            // Add event listener for run mode changes
+            document.getElementById('runMode').addEventListener('change', function() {
+                toggleIterationInputs();
+                updateTotalIncidents();
+            });
+
+            // Add event listener for event type changes
+            document.getElementById('eventType').addEventListener('change', updateTotalIncidents);
+        }
+
+        function updateTotalIncidents() {
+            const runMode = document.getElementById('runMode').value;
+            const iterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value) || 0;
+            const eventType = document.getElementById('eventType').value;
+            const keySelectionMode = document.getElementById(eventType === 'standard' ? 'keySelectionMode' : 'customKeySelectionMode').value;
+            
+            const totalIncidentsInfo = document.getElementById('totalIncidentsInfo');
+            
+            if (keySelectionMode === 'specific') {
+                const selectedKeys = getSelectedKeys(eventType);
+                if (selectedKeys.length > 0) {
+                    const totalIncidents = selectedKeys.length * iterations;
+                    totalIncidentsInfo.innerHTML = `
+                        <strong>Total Incidents:</strong> ${totalIncidents}<br>
+                        <small>(${iterations} incidents × ${selectedKeys.length} selected services)</small>
+                    `;
+                } else {
+                    totalIncidentsInfo.innerHTML = '<strong>Select services to calculate total incidents</strong>';
+                }
+            } else {
+                totalIncidentsInfo.innerHTML = `
+                    <strong>Total Incidents:</strong> ${iterations}<br>
+                    <small>(Random service selection)</small>
+                `;
+            }
         }
 
         function toggleSection(sectionId) {
@@ -618,6 +673,7 @@
             updateKeysListMain();
             updateSpecificKeyDropdown();
             localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+            updateTotalIncidents();
         }
 
         function editKeyName(index) {
@@ -656,14 +712,14 @@
                 </div>
             `).join('');
         }
-
         function updateSpecificKeyDropdown() {
             const standardKeysHtml = routingKeys.map(keyObj => `
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" 
                            value="${keyObj.key}" 
                            id="standard-key-${keyObj.key}" 
-                           name="specific-keys">
+                           name="specific-keys"
+                           onchange="updateTotalIncidents()">
                     <label class="form-check-label" for="standard-key-${keyObj.key}">
                         ${keyObj.name} (${keyObj.key})
                     </label>
@@ -675,7 +731,8 @@
                     <input class="form-check-input" type="checkbox" 
                            value="${keyObj.key}" 
                            id="custom-key-${keyObj.key}" 
-                           name="custom-specific-keys">
+                           name="custom-specific-keys"
+                           onchange="updateTotalIncidents()">
                     <label class="form-check-label" for="custom-key-${keyObj.key}">
                         ${keyObj.name} (${keyObj.key})
                     </label>
@@ -706,13 +763,10 @@
             standardControls.classList.toggle('hidden', eventType !== 'standard');
             customControls.classList.toggle('hidden', eventType !== 'custom');
             
-            // Keep iteration controls visible when switching modes
-            const runMode = document.getElementById('runMode').value;
-            document.getElementById('iterationControls').classList.toggle('hidden', runMode === 'single');
-            
             if (eventType === 'custom') {
                 updatePayloadPreview();
             }
+            updateTotalIncidents();
         }
 
         function toggleIterationInputs() {
@@ -759,94 +813,6 @@
                 JSON.stringify(payload, null, 2);
         }
 
-        function saveCurrentPayload() {
-            const name = document.getElementById('payloadName').value.trim();
-            if (!name) {
-                alert('Please enter a name for the payload');
-                return;
-            }
-
-            let customDetails = {};
-            try {
-                const customDetailsText = document.getElementById('customDetailsText').value;
-                if (customDetailsText.trim()) {
-                    customDetails = JSON.parse(customDetailsText);
-                }
-            } catch (e) {
-                alert('Invalid JSON format in custom details');
-                return;
-            }
-
-            const payload = {
-                name: name,
-                data: {
-                    summary: document.getElementById('eventSummary').value || "",
-                    severity: document.getElementById('customSeverity').value,
-                    source: document.getElementById('eventSource').value || "",
-                    group: document.getElementById('eventGroup').value || "",
-                    component: document.getElementById('eventComponent').value || "",
-                    class: document.getElementById('eventClass').value || "",
-                    custom_details: customDetails
-                }
-            };
-
-            const existingIndex = savedPayloads.findIndex(p => p.name === name);
-            if (existingIndex >= 0) {
-                if (confirm('A payload with this name already exists. Do you want to update it?')) {
-                    savedPayloads[existingIndex] = payload;
-                } else {
-                    return;
-                }
-            } else {
-                savedPayloads.push(payload);
-            }
-
-            localStorage.setItem('pdSavedPayloads', JSON.stringify(savedPayloads));
-            updateSavedPayloadsDropdown();
-            document.getElementById('payloadName').value = '';
-            logStatus(`Payload "${name}" saved successfully`);
-        }
-
-        function loadSavedPayload() {
-            const selectedPayloadName = document.getElementById('savedPayloadsDropdown').value;
-            if (!selectedPayloadName) {
-                clearPayloadFields();
-                return;
-            }
-
-            const payload = savedPayloads.find(p => p.name === selectedPayloadName);
-            if (payload) {
-                document.getElementById('eventSummary').value = payload.data.summary;
-                document.getElementById('customSeverity').value = payload.data.severity;
-                document.getElementById('eventSource').value = payload.data.source;
-                document.getElementById('eventGroup').value = payload.data.group;
-                document.getElementById('eventComponent').value = payload.data.component;
-                document.getElementById('eventClass').value = payload.data.class;
-                document.getElementById('customDetailsText').value = 
-                    JSON.stringify(payload.data.custom_details, null, 2);
-                updatePayloadPreview();
-            }
-        }
-
-        function clearPayloadFields() {
-            document.getElementById('eventSummary').value = '';
-            document.getElementById('customSeverity').value = 'critical';
-            document.getElementById('eventSource').value = '';
-            document.getElementById('eventGroup').value = '';
-            document.getElementById('eventComponent').value = '';
-            document.getElementById('eventClass').value = '';
-            document.getElementById('customDetailsText').value = '';
-            updatePayloadPreview();
-        }
-
-        function updateSavedPayloadsDropdown() {
-            const dropdown = document.getElementById('savedPayloadsDropdown');
-            dropdown.innerHTML = '<option value="">Create New Payload</option>' +
-                savedPayloads.map(payload => 
-                    `<option value="${payload.name}">${payload.name}</option>`
-                ).join('');
-        }
-
         function getSelectedKeys(mode) {
             const selector = mode === 'standard' ? 'specific-keys' : 'custom-specific-keys';
             return Array.from(document.querySelectorAll(`input[name="${selector}"]:checked`))
@@ -869,44 +835,56 @@
 
         function startStandardGenerator() {
             const keySelectionMode = document.getElementById('keySelectionMode').value;
+            const runMode = document.getElementById('runMode').value;
+            const iterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+
             if (keySelectionMode === 'specific') {
                 const selectedKeys = getSelectedKeys('standard');
                 if (selectedKeys.length === 0) {
                     alert('Please select at least one key in specific mode');
                     return;
                 }
-                selectedKeysQueue = [...selectedKeys];
-                totalSelectedKeys = selectedKeys.length;
+                selectedKeysQueue = [];
+                // For each iteration, add all selected keys
+                for (let i = 0; i < iterations; i++) {
+                    selectedKeysQueue.push(...selectedKeys);
+                }
+                totalIterations = selectedKeys.length * iterations;
+            } else {
+                totalIterations = iterations;
             }
 
             isRunning = true;
             document.querySelector('button[onclick="startGenerator()"]').disabled = true;
             document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
-
-            const runMode = document.getElementById('runMode').value;
-            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
             currentIteration = 0;
             runStandardIteration();
         }
 
         function startCustomGenerator() {
             const keySelectionMode = document.getElementById('customKeySelectionMode').value;
+            const runMode = document.getElementById('runMode').value;
+            const iterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
+
             if (keySelectionMode === 'specific') {
                 const selectedKeys = getSelectedKeys('custom');
                 if (selectedKeys.length === 0) {
                     alert('Please select at least one key in specific mode');
                     return;
                 }
-                selectedKeysQueue = [...selectedKeys];
-                totalSelectedKeys = selectedKeys.length;
+                selectedKeysQueue = [];
+                // For each iteration, add all selected keys
+                for (let i = 0; i < iterations; i++) {
+                    selectedKeysQueue.push(...selectedKeys);
+                }
+                totalIterations = selectedKeys.length * iterations;
+            } else {
+                totalIterations = iterations;
             }
 
             isRunning = true;
             document.querySelector('button[onclick="startGenerator()"]').disabled = true;
             document.querySelector('button[onclick="stopGenerator()"]').disabled = false;
-
-            const runMode = document.getElementById('runMode').value;
-            totalIterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value);
             currentIteration = 0;
             runCustomIteration();
         }
@@ -922,10 +900,7 @@
                 const randomKeyObj = routingKeys[Math.floor(Math.random() * routingKeys.length)];
                 selectedKey = randomKeyObj.key;
             } else {
-                if (selectedKeysQueue.length === 0) {
-                    selectedKeysQueue = [...getSelectedKeys('standard')];
-                }
-                selectedKey = selectedKeysQueue.shift();
+                selectedKey = selectedKeysQueue[currentIteration - 1];
             }
 
             const keyObj = routingKeys.find(k => k.key === selectedKey);
@@ -991,10 +966,7 @@
                 const randomKeyObj = routingKeys[Math.floor(Math.random() * routingKeys.length)];
                 selectedKey = randomKeyObj.key;
             } else {
-                if (selectedKeysQueue.length === 0) {
-                    selectedKeysQueue = [...getSelectedKeys('custom')];
-                }
-                selectedKey = selectedKeysQueue.shift();
+                selectedKey = selectedKeysQueue[currentIteration - 1];
             }
 
             const keyObj = routingKeys.find(k => k.key === selectedKey);
@@ -1094,6 +1066,94 @@
             const timestamp = new Date().toLocaleTimeString();
             statusLog.innerHTML += `<div>[${timestamp}] ${message}</div>`;
             statusLog.scrollTop = statusLog.scrollHeight;
+        }
+
+        function saveCurrentPayload() {
+            const name = document.getElementById('payloadName').value.trim();
+            if (!name) {
+                alert('Please enter a name for the payload');
+                return;
+            }
+
+            let customDetails = {};
+            try {
+                const customDetailsText = document.getElementById('customDetailsText').value;
+                if (customDetailsText.trim()) {
+                    customDetails = JSON.parse(customDetailsText);
+                }
+            } catch (e) {
+                alert('Invalid JSON format in custom details');
+                return;
+            }
+
+            const payload = {
+                name: name,
+                data: {
+                    summary: document.getElementById('eventSummary').value || "",
+                    severity: document.getElementById('customSeverity').value,
+                    source: document.getElementById('eventSource').value || "",
+                    group: document.getElementById('eventGroup').value || "",
+                    component: document.getElementById('eventComponent').value || "",
+                    class: document.getElementById('eventClass').value || "",
+                    custom_details: customDetails
+                }
+            };
+
+            const existingIndex = savedPayloads.findIndex(p => p.name === name);
+            if (existingIndex >= 0) {
+                if (confirm('A payload with this name already exists. Do you want to update it?')) {
+                    savedPayloads[existingIndex] = payload;
+                } else {
+                    return;
+                }
+            } else {
+                savedPayloads.push(payload);
+            }
+
+            localStorage.setItem('pdSavedPayloads', JSON.stringify(savedPayloads));
+            updateSavedPayloadsDropdown();
+            document.getElementById('payloadName').value = '';
+            logStatus(`Payload "${name}" saved successfully`);
+        }
+
+        function loadSavedPayload() {
+            const selectedPayloadName = document.getElementById('savedPayloadsDropdown').value;
+            if (!selectedPayloadName) {
+                clearPayloadFields();
+                return;
+            }
+
+            const payload = savedPayloads.find(p => p.name === selectedPayloadName);
+            if (payload) {
+                document.getElementById('eventSummary').value = payload.data.summary;
+                document.getElementById('customSeverity').value = payload.data.severity;
+                document.getElementById('eventSource').value = payload.data.source;
+                document.getElementById('eventGroup').value = payload.data.group;
+                document.getElementById('eventComponent').value = payload.data.component;
+                document.getElementById('eventClass').value = payload.data.class;
+                document.getElementById('customDetailsText').value = 
+                    JSON.stringify(payload.data.custom_details, null, 2);
+                updatePayloadPreview();
+            }
+        }
+
+        function clearPayloadFields() {
+            document.getElementById('eventSummary').value = '';
+            document.getElementById('customSeverity').value = 'critical';
+            document.getElementById('eventSource').value = '';
+            document.getElementById('eventGroup').value = '';
+            document.getElementById('eventComponent').value = '';
+            document.getElementById('eventClass').value = '';
+            document.getElementById('customDetailsText').value = '';
+            updatePayloadPreview();
+        }
+
+        function updateSavedPayloadsDropdown() {
+            const dropdown = document.getElementById('savedPayloadsDropdown');
+            dropdown.innerHTML = '<option value="">Create New Payload</option>' +
+                savedPayloads.map(payload => 
+                    `<option value="${payload.name}">${payload.name}</option>`
+                ).join('');
         }
     </script>
 </body>
