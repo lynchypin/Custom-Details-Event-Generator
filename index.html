@@ -20,10 +20,22 @@
             background-color: #006666 !important;
             color: white !important;
             padding: 1rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .card-header:hover {
+            background-color: #005555 !important;
         }
         .card-header h5 {
             color: white !important;
             margin: 0;
+        }
+        .collapse-icon {
+            float: right;
+            transition: transform 0.3s ease;
+        }
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
         }
         .card-body {
             padding: 1rem;
@@ -53,6 +65,10 @@
             justify-content: space-between;
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .saved-payload-controls {
+            display: flex;
+            gap: 0.5rem;
         }
         .status-log {
             background-color: #005a2f;
@@ -174,6 +190,15 @@
             border-color: #005555;
             color: white !important;
         }
+        .btn-outline-danger {
+            color: white !important;
+            border-color: #dc3545;
+        }
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white !important;
+        }
         .custom-details {
             background-color: #005a2f;
             padding: 1rem;
@@ -250,10 +275,13 @@
 
             <!-- Routing Keys Management -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Manage Routing Keys</h5>
+                <div class="card-header" onclick="toggleSection('mainKeysList')">
+                    <h5>
+                        Manage Routing Keys
+                        <span class="collapse-icon">▼</span>
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="mainKeysListSection">
                     <div id="mainKeysList"></div>
                     <div class="input-group mt-3">
                         <input type="text" id="mainNewKeyInput" class="form-control" placeholder="Enter new routing key">
@@ -265,10 +293,13 @@
 
             <!-- Event Generator Controls -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Event Generator Controls</h5>
+                <div class="card-header" onclick="toggleSection('generatorControls')">
+                    <h5>
+                        Event Generator Controls
+                        <span class="collapse-icon">▼</span>
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="generatorControlsSection">
                     <!-- Event Type Selection -->
                     <div class="mb-3">
                         <label class="form-label">Event Type</label>
@@ -326,9 +357,14 @@
 
                         <div class="mb-3">
                             <label class="form-label">Saved Payloads</label>
-                            <select id="savedPayloadsDropdown" class="form-select" onchange="loadSavedPayload()">
-                                <option value="">Create New Payload</option>
-                            </select>
+                            <div class="input-group">
+                                <select id="savedPayloadsDropdown" class="form-select" onchange="loadSavedPayload()">
+                                    <option value="">Create New Payload</option>
+                                </select>
+                                <button onclick="deleteSelectedPayload()" class="btn btn-outline-danger">
+                                    Delete Payload
+                                </button>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -390,7 +426,7 @@
                         </div>
                     </div>
 
-                    <!-- Run Mode and Iteration Controls (moved after both standard and custom controls) -->
+                    <!-- Run Mode and Iteration Controls -->
                     <div class="mb-4">
                         <div class="mb-3">
                             <label class="form-label">Run Mode</label>
@@ -419,10 +455,13 @@
 
             <!-- Status Log -->
             <div class="card">
-                <div class="card-header">
-                    <h5>Status Log</h5>
+                <div class="card-header" onclick="toggleSection('statusLog')">
+                    <h5>
+                        Status Log
+                        <span class="collapse-icon">▼</span>
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" id="statusLogSection">
                     <div id="countdown" class="countdown"></div>
                     <div id="statusLog" class="status-log"></div>
                 </div>
@@ -466,6 +505,14 @@
 
             // Initialize event listeners
             initializeEventListeners();
+
+            // Initialize collapsible sections
+            ['mainKeysList', 'generatorControls', 'statusLog'].forEach(sectionId => {
+                const section = document.getElementById(`${sectionId}Section`);
+                const icon = section.previousElementSibling.querySelector('.collapse-icon');
+                section.style.display = 'block';
+                icon.classList.remove('collapsed');
+            });
         };
 
         function initializeEventListeners() {
@@ -484,6 +531,38 @@
             document.getElementById('customKeySelectionMode').addEventListener('change', function() {
                 toggleKeySelectionMode('custom');
             });
+        }
+
+        function toggleSection(sectionId) {
+            const section = document.getElementById(`${sectionId}Section`);
+            const icon = section.previousElementSibling.querySelector('.collapse-icon');
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                icon.classList.remove('collapsed');
+            } else {
+                section.style.display = 'none';
+                icon.classList.add('collapsed');
+            }
+        }
+
+        function deleteSelectedPayload() {
+            const selectedPayloadName = document.getElementById('savedPayloadsDropdown').value;
+            if (!selectedPayloadName) {
+                alert('Please select a payload to delete');
+                return;
+            }
+
+            if (confirm(`Are you sure you want to delete the payload "${selectedPayloadName}"?`)) {
+                const index = savedPayloads.findIndex(p => p.name === selectedPayloadName);
+                if (index > -1) {
+                    savedPayloads.splice(index, 1);
+                    localStorage.setItem('pdSavedPayloads', JSON.stringify(savedPayloads));
+                    updateSavedPayloadsDropdown();
+                    clearPayloadFields();
+                    logStatus(`Payload "${selectedPayloadName}" deleted successfully`);
+                }
+            }
         }
 
         function toggleKeySelectionMode(mode) {
@@ -606,6 +685,7 @@
             document.getElementById('specificKeys').innerHTML = standardKeysHtml;
             document.getElementById('customSpecificKeys').innerHTML = customKeysHtml;
         }
+
         function saveAndContinue() {
             if (routingKeys.length > 0) {
                 localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
