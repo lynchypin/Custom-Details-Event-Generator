@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PagerDuty Event Generator</title>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C3BL650FBF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-C3BL650FBF');
+    </script>
+    
     <link rel="icon" type="image/png" href="https://i.imgur.com/bvScwHL.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -374,6 +384,7 @@
 
                     <!-- Custom Event Controls -->
                     <div id="customControls" class="hidden">
+                        <!-- [Previous custom controls remain the same] -->
                         <div class="mb-3">
                             <label class="form-label">Routing Key Selection</label>
                             <select id="customKeySelectionMode" class="form-select" onchange="toggleKeySelectionMode('custom')">
@@ -496,6 +507,12 @@
 
         // Load saved keys and payloads on startup
         window.onload = function() {
+            // Track page load in Google Analytics
+            gtag('event', 'page_view', {
+                'page_title': 'PagerDuty Event Generator',
+                'page_location': window.location.href
+            });
+
             // Load saved routing keys
             const savedKeys = localStorage.getItem('pdRoutingKeys');
             if (savedKeys) {
@@ -540,11 +557,21 @@
             document.getElementById('keySelectionMode').addEventListener('change', function() {
                 toggleKeySelectionMode('standard');
                 updateTotalIncidents();
+                // Track selection mode change
+                gtag('event', 'selection_mode_change', {
+                    'mode': this.value,
+                    'type': 'standard'
+                });
             });
 
             document.getElementById('customKeySelectionMode').addEventListener('change', function() {
                 toggleKeySelectionMode('custom');
                 updateTotalIncidents();
+                // Track selection mode change
+                gtag('event', 'selection_mode_change', {
+                    'mode': this.value,
+                    'type': 'custom'
+                });
             });
 
             // Add event listener for iteration count changes
@@ -555,13 +582,33 @@
             document.getElementById('runMode').addEventListener('change', function() {
                 toggleIterationInputs();
                 updateTotalIncidents();
+                // Track run mode change
+                gtag('event', 'run_mode_change', {
+                    'mode': this.value
+                });
             });
 
             // Add event listener for event type changes
-            document.getElementById('eventType').addEventListener('change', updateTotalIncidents);
+            document.getElementById('eventType').addEventListener('change', function() {
+                updateTotalIncidents();
+                // Track event type change
+                gtag('event', 'event_type_change', {
+                    'type': this.value
+                });
+            });
+
+            // Track button clicks
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', function() {
+                    gtag('event', 'button_click', {
+                        'button_text': this.textContent.trim(),
+                        'button_action': this.getAttribute('onclick')
+                    });
+                });
+            });
         }
 
-        function updateTotalIncidents() {
+       function updateTotalIncidents() {
             const runMode = document.getElementById('runMode').value;
             const iterations = runMode === 'single' ? 1 : parseInt(document.getElementById('iterations').value) || 0;
             const eventType = document.getElementById('eventType').value;
@@ -595,9 +642,19 @@
             if (section.style.display === 'none') {
                 section.style.display = 'block';
                 icon.classList.remove('collapsed');
+                // Track section toggle
+                gtag('event', 'section_toggle', {
+                    'section': sectionId,
+                    'action': 'expand'
+                });
             } else {
                 section.style.display = 'none';
                 icon.classList.add('collapsed');
+                // Track section toggle
+                gtag('event', 'section_toggle', {
+                    'section': sectionId,
+                    'action': 'collapse'
+                });
             }
         }
 
@@ -616,6 +673,10 @@
                     updateSavedPayloadsDropdown();
                     clearPayloadFields();
                     logStatus(`Payload "${selectedPayloadName}" deleted successfully`);
+                    // Track payload deletion
+                    gtag('event', 'payload_delete', {
+                        'payload_name': selectedPayloadName
+                    });
                 }
             }
         }
@@ -648,6 +709,10 @@
                 nameInput.value = '';
                 updateKeysList();
                 localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+                // Track key addition
+                gtag('event', 'key_add', {
+                    'key_name': name
+                });
             }
         }
 
@@ -664,19 +729,29 @@
                 updateKeysListMain();
                 updateSpecificKeyDropdown();
                 localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+                // Track key addition
+                gtag('event', 'key_add_main', {
+                    'key_name': name
+                });
             }
         }
 
         function removeKey(index) {
+            const keyName = routingKeys[index].name;
             routingKeys.splice(index, 1);
             updateKeysList();
             updateKeysListMain();
             updateSpecificKeyDropdown();
             localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
             updateTotalIncidents();
+            // Track key removal
+            gtag('event', 'key_remove', {
+                'key_name': keyName
+            });
         }
 
         function editKeyName(index) {
+            const oldName = routingKeys[index].name;
             const newName = prompt('Enter new name for the key:', routingKeys[index].name);
             if (newName !== null && newName.trim() !== '') {
                 routingKeys[index].name = newName.trim();
@@ -684,6 +759,11 @@
                 updateKeysListMain();
                 updateSpecificKeyDropdown();
                 localStorage.setItem('pdRoutingKeys', JSON.stringify(routingKeys));
+                // Track key rename
+                gtag('event', 'key_rename', {
+                    'old_name': oldName,
+                    'new_name': newName.trim()
+                });
             }
         }
 
@@ -712,6 +792,7 @@
                 </div>
             `).join('');
         }
+
         function updateSpecificKeyDropdown() {
             const standardKeysHtml = routingKeys.map(keyObj => `
                 <div class="form-check">
@@ -750,6 +831,10 @@
                 document.getElementById('controlSection').classList.remove('hidden');
                 updateKeysListMain();
                 updateSpecificKeyDropdown();
+                // Track setup completion
+                gtag('event', 'setup_complete', {
+                    'keys_count': routingKeys.length
+                });
             } else {
                 alert('Please add at least one routing key');
             }
@@ -789,7 +874,7 @@
             const payload = {
                 routing_key: "YOUR_ROUTING_KEY",
                 event_action: "trigger",
-                client: "KrakenDuty",
+                client: "PD Event Generator",
                 client_url: window.location.href,
                 payload: {
                     summary: document.getElementById('eventSummary').value || "Test alert",
@@ -826,6 +911,11 @@
             }
 
             const eventType = document.getElementById('eventType').value;
+            // Track generator start
+            gtag('event', 'generator_start', {
+                'event_type': eventType
+            });
+
             if (eventType === 'standard') {
                 startStandardGenerator();
             } else {
@@ -942,8 +1032,20 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 logStatus('Event sent successfully');
+                // Track successful event
+                gtag('event', 'standard_event_sent', {
+                    'severity': selectedSeverity,
+                    'scenario': selectedScenario
+                });
             })
-            .catch(error => logStatus(`Error: ${error.message}`));
+            .catch(error => {
+                logStatus(`Error: ${error.message}`);
+                // Track failed event
+                gtag('event', 'event_error', {
+                    'error_message': error.message,
+                    'event_type': 'standard'
+                });
+            });
 
             if (currentIteration < totalIterations && isRunning) {
                 const delay = parseInt(document.getElementById('delay').value);
@@ -987,7 +1089,7 @@
             const payload = {
                 routing_key: selectedKey,
                 event_action: "trigger",
-                client: "KrakenDuty",
+                client: "PD Event Generator",
                 client_url: window.location.href,
                 payload: {
                     summary: document.getElementById('eventSummary').value || "Test alert",
@@ -1023,8 +1125,19 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 logStatus('Event sent successfully');
+                // Track successful event
+                gtag('event', 'custom_event_sent', {
+                    'severity': payload.payload.severity
+                });
             })
-            .catch(error => logStatus(`Error: ${error.message}`));
+            .catch(error => {
+                logStatus(`Error: ${error.message}`);
+                // Track failed event
+                gtag('event', 'event_error', {
+                    'error_message': error.message,
+                    'event_type': 'custom'
+                });
+            });
 
             if (currentIteration < totalIterations && isRunning) {
                 const delay = parseInt(document.getElementById('delay').value);
@@ -1043,6 +1156,11 @@
             document.querySelector('button[onclick="stopGenerator()"]').disabled = true;
             document.getElementById('countdown').innerHTML = '';
             logStatus('Generator stopped');
+            // Track generator stop
+            gtag('event', 'generator_stop', {
+                'iterations_completed': currentIteration,
+                'total_iterations': totalIterations
+            });
         }
 
         function startCountdown(seconds) {
@@ -1114,6 +1232,11 @@
             updateSavedPayloadsDropdown();
             document.getElementById('payloadName').value = '';
             logStatus(`Payload "${name}" saved successfully`);
+            // Track payload save
+            gtag('event', 'payload_save', {
+                'payload_name': name,
+                'is_update': existingIndex >= 0
+            });
         }
 
         function loadSavedPayload() {
@@ -1134,6 +1257,10 @@
                 document.getElementById('customDetailsText').value = 
                     JSON.stringify(payload.data.custom_details, null, 2);
                 updatePayloadPreview();
+                // Track payload load
+                gtag('event', 'payload_load', {
+                    'payload_name': selectedPayloadName
+                });
             }
         }
 
