@@ -1012,7 +1012,7 @@
             logStatus(`Using routing key: ${keyName} (${selectedKey})`);
             logStatus(`Scenario: ${selectedScenario}, Severity: ${selectedSeverity}`);
 
-            fetch('https://events.pagerduty.com/v2/enqueue', {
+            fetch('https://e52bhvyaae.execute-api.us-east-2.amazonaws.com/test/LogAndForwardEvent', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1113,7 +1113,7 @@
             logStatus(`Using routing key: ${keyName} (${selectedKey})`);
             logStatus(`Sending custom payload with severity: ${payload.payload.severity}`);
 
-            fetch('https://events.pagerduty.com/v2/enqueue', {
+            fetch('https://e52bhvyaae.execute-api.us-east-2.amazonaws.com/test/LogAndForwardEvent', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
