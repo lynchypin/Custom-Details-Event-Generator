@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview — PagerDuty Event Generator (Enhanced)</title>
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <p>Loading preview…</p>
+  <script>
+    // Fetch the existing index.html, inject the enhancement CSS/JS, and render it.
+    (function(){
+      fetch('index.html').then(function(resp){
+        if (!resp.ok) throw new Error('Failed to fetch index.html: ' + resp.status);
+        return resp.text();
+      }).then(function(html){
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Inject stylesheet
+        const link = doc.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/style.css';
+        doc.head.appendChild(link);
+
+        // Inject enhancement script
+        const script = doc.createElement('script');
+        script.src = 'js/pd-enhance.js';
+        script.defer = true;
+        doc.head.appendChild(script);
+
+        // Auto-init the enhancement for preview after DOMContentLoaded
+        const initScript = doc.createElement('script');
+        initScript.textContent = '\nwindow.addEventListener("DOMContentLoaded", function(){\n  try{ if(window.PDGenerator){ PDGenerator.init({ enableAutoHook: true }); } }catch(e){console.error(e);}\n});\n';
+        doc.body.appendChild(initScript);
+
+        // Write the modified document
+        document.open();
+        document.write(doc.documentElement.outerHTML);
+        document.close();
+      }).catch(function(err){
+        document.body.innerHTML = '<p>Error loading preview: ' + String(err) + '</p>';
+      });
+    })();
+  </script>
+</body>
+</html>
