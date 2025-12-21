@@ -1,0 +1,39 @@
+name: PagerDuty Failure Notification
+
+on:
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+
+jobs:
+  notify-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Send PagerDuty Alert
+        env:
+          PD_ROUTING_KEY: ${{ secrets.PD_GITHUB_OTHER }}
+        run: |
+          curl -s -X POST https://events.pagerduty.com/v2/enqueue \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"routing_key\": \"$PD_ROUTING_KEY\",
+              \"event_action\": \"trigger\",
+              \"dedup_key\": \"${{ github.event.workflow_run.id }}\",
+              \"payload\": {
+                \"summary\": \"GitHub Workflow Failed: ${{ github.event.workflow_run.name }} in ${{ github.repository }}\",
+                \"severity\": \"error\",
+                \"source\": \"github-actions\",
+                \"component\": \"${{ github.repository }}\",
+                \"custom_details\": {
+                  \"repository\": \"${{ github.repository }}\",
+                  \"workflow\": \"${{ github.event.workflow_run.name }}\",
+                  \"branch\": \"${{ github.event.workflow_run.head_branch }}\",
+                  \"commit\": \"${{ github.event.workflow_run.head_sha }}\",
+                  \"run_id\": \"${{ github.event.workflow_run.id }}\",
+                  \"run_url\": \"${{ github.event.workflow_run.html_url }}\",
+                  \"actor\": \"${{ github.event.workflow_run.actor.login }}\",
+                  \"event\": \"${{ github.event.workflow_run.event }}\"
+                }
+              }
+            }"
